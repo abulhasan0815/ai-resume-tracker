@@ -20,18 +20,18 @@ const upload = () => {
 
     const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file}: { companyName: string, jobTitle: string, jobDescription: string, file: File }) => {
         setIsprocessing(true);
+
         setStatusText('Uploading the file...');
         const uploadedFile = await fs.upload([file]);
-
         if (!uploadedFile) return setStatusText('Error: Failed to upload file');
 
         setStatusText('Converting to Image')
         const imageFile = await convertPdfToImage(file);
-        if (!uploadedFile) return setStatusText('Error: Failed to convert pdf to image');
+        if (!imageFile.file || imageFile.error) return setStatusText('Error: Failed to convert pdf to image');
 
         setStatusText("Uploading the image../");
-        const uploadedImage = await fs.upload([file]);
-        if (!uploadedFile) return setStatusText('Error: Failed to upload image');
+        const uploadedImage = await fs.upload([imageFile.file]);
+        if (!uploadedImage) return setStatusText('Error: Failed to upload image');
 
         setStatusText("Preparing data...")
 
@@ -39,7 +39,7 @@ const upload = () => {
         const data = {
             id: uuid,
             resumePath: uploadedFile.path,
-            imagePath: uploadedImage?.path,
+            imagePath: uploadedImage.path,
             companyName, jobTitle, jobDescription,
             feedback: ''
         }
@@ -63,6 +63,8 @@ const upload = () => {
 
         setStatusText('Analysis Complete, redirecting...');
         console.log(data);
+
+        navigate(`/resume/${uuid}`)
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
